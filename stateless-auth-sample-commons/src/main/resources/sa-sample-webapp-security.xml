@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    
+    <import resource="classpath*:sa-core.xml" />
+	<import resource="classpath*:sa-redis.xml" />
+	
+	<!-- 注册过滤器 Start -->
+    <bean id="statelessAccessAuthcFilter" class="com.github.sa.module.web.filter.StatelessAccessAuthcFilter" />
+    <bean id="statelessAnonAuthcFilter" class="com.github.sa.module.web.filter.StatelessAnonAuthcFilter" />
+    
+    <util:map id="filters">
+        <entry key="statelessAccessAuthc" value-ref="statelessAccessAuthcFilter" />
+        <entry key="statelessAnonAuthcFilter" value-ref="statelessAnonAuthcFilter" />
+    </util:map>
+    
+    <util:map id="filterChainDefinitionMap">
+        <entry key="/static/**" value="anon" />
+        <entry key="/" value="statelessAnonAuthcFilter" />
+        <entry key="/**" value="statelessAccessAuthc" />
+    </util:map>
+    <!-- 注册过滤器 End -->
+    
+    <util:set id="realms">
+        <bean class="com.github.sa.module.realm.StatelessRealm" p:cachingEnabled="false" />
+    </util:set>
+    
+	<bean id="sessionService" class="com.github.sa.core.service.RedisSessionService"
+		p:redisKey="${session.redisKey}" p:timeoutOfMinutes="${session.timeoutOfMinutes}" />
+		
+	<bean id="accessTokenAware" class="com.github.sa.core.accesstoken.AccessTokenAccessor"
+		p:accessTokenKey="${accesstoken.tokenKey}" />
+
+	<bean id="accessTokenGenerator" class="com.github.sa.core.accesstoken.DesAccessTokenGenerator"
+		p:desKeySpec="${accesstoken.desKeySpec}" />
+    
+</beans>
